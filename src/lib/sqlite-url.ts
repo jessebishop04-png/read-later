@@ -86,11 +86,35 @@ export function resolveSqliteDatabaseFileAndUrl(projectRoot: string): { filePath
   return { filePath: appDataDb, url: prismaSqliteFileUrl(appDataDb) };
 }
 
+/**
+ * True when DATABASE_URL is an absolute SQLite file URL (e.g. Docker `file:/data/prod.db`).
+ * Those must be used as-is so Prisma matches `prisma migrate deploy`, not remapped to prisma/dev.db.
+ */
+function isAbsoluteFileSqliteUrl(url: string): boolean {
+  const match = /^file:(.+)$/i.exec(url.trim());
+  if (!match) return false;
+  const rest = match[1];
+  if (rest.startsWith("//")) {
+    const after = rest.slice(2);
+    if (after.startsWith("/")) return true;
+    if (/^[A-Za-z]:[\\/]/.test(after)) return true;
+    return false;
+  }
+  if (rest.startsWith("/")) return true;
+  if (/^[A-Za-z]:[\\/]/.test(rest)) return true;
+  return false;
+}
+
 /** Resolved URL for PrismaClient when using local SQLite (not Postgres). */
 export function getPrismaSqliteDatasourceUrl(): string | undefined {
   const raw = process.env.DATABASE_URL?.replace(/^["']|["']$/g, "").trim() ?? "";
   if (raw && !raw.toLowerCase().startsWith("file:")) {
     return undefined;
+  }
+
+  if (raw && isAbsoluteFileSqliteUrl(raw)) {
+    process.env.DATABASE_URL = raw;
+    return raw;
   }
 
   const root = findProjectRoot();
