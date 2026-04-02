@@ -45,8 +45,10 @@ export default auth((req) => {
   return undefined;
 });
 
+// Exclude /api/health so NextAuth middleware never runs: it always calls session first, and
+// Railway healthchecks use Host: healthcheck.railway.app, which can trigger "invalid host header".
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|icons/|sw.js|workbox-).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|icons/|sw.js|workbox-|api/health).*)",
   ],
 };
