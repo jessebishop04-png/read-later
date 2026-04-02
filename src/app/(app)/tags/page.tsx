@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
-import { auth } from "@/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { prisma } from "@/lib/prisma";
 import { DbSetupNotice } from "@/components/db-setup-notice";
 
@@ -9,7 +9,7 @@ type TagRow = Prisma.TagGetPayload<{
 }>;
 
 export default async function TagsPage() {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) return null;
 
   let tags: TagRow[];

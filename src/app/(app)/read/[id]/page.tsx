@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Prisma } from "@prisma/client";
-import { auth } from "@/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { prisma } from "@/lib/prisma";
 import { ArticleReader } from "@/components/article-reader";
 import { DbSetupNotice } from "@/components/db-setup-notice";
@@ -9,7 +9,7 @@ import { RegisterReadChrome } from "@/components/register-read-chrome";
 import { formatSavedDate } from "@/lib/format-saved-date";
 
 export default async function ReadPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) return null;
 
   const { id } = await params;

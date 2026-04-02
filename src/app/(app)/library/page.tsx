@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { Suspense } from "react";
-import { auth } from "@/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { prisma } from "@/lib/prisma";
 import { DbSetupNotice } from "@/components/db-setup-notice";
 import { LibraryFilters } from "@/components/library-filters";
@@ -20,7 +20,7 @@ export default async function LibraryPage({
     q?: string;
   }>;
 }) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) return null;
 
   const sp = await searchParams;

@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { prisma } from "@/lib/prisma";
 import { extractFromUrl } from "@/lib/extract";
 import { normalizeUrlInput } from "@/lib/normalize-url";
@@ -16,7 +16,7 @@ type ListItemPayload = Prisma.SavedItemGetPayload<{
 }>;
 
 export async function GET(req: Request) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -66,7 +66,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -1,16 +1,11 @@
 import type { Session } from "next-auth";
 import { AppShell } from "@/components/app-shell";
 import { ReadChromeProvider } from "@/components/read-chrome-context";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { safeAuth } from "@/lib/safe-auth";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  let session: Session | null = null;
-  try {
-    session = await auth();
-  } catch (err) {
-    console.error("read-later: auth() failed in app layout", err);
-  }
+  const session: Session | null = await safeAuth();
   let folders: { id: string; name: string }[] = [];
   let navUser: {
     name: string | null;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { saveUserAvatarFile } from "@/lib/avatar-storage";
 import { prisma } from "@/lib/prisma";
 
@@ -15,7 +15,7 @@ const MIME_TO_EXT: Record<string, string> = {
 };
 
 export async function POST(req: Request) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

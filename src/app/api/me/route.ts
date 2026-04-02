@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { isLikelyHttpUrl, normalizeUrlInput } from "@/lib/normalize-url";
 import { isOurAvatarPath, removeStoredAvatarsForUser } from "@/lib/avatar-storage";
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(req: Request) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

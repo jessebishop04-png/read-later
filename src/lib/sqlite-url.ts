@@ -105,9 +105,16 @@ function isAbsoluteFileSqliteUrl(url: string): boolean {
   return false;
 }
 
+function rawSqliteConfiguredUrl(): string {
+  const strip = (v: string | undefined) => v?.replace(/^["']|["']$/g, "").trim() ?? "";
+  const dedicated = strip(process.env.SQLITE_DATABASE_URL);
+  if (dedicated) return dedicated;
+  return strip(process.env.DATABASE_URL);
+}
+
 /** Resolved URL for PrismaClient when using local SQLite (not Postgres). */
 export function getPrismaSqliteDatasourceUrl(): string | undefined {
-  const raw = process.env.DATABASE_URL?.replace(/^["']|["']$/g, "").trim() ?? "";
+  const raw = rawSqliteConfiguredUrl();
   if (raw && !raw.toLowerCase().startsWith("file:")) {
     return undefined;
   }

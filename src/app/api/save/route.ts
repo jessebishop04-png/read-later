@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { extractFromUrl } from "@/lib/extract";
 import { prisma } from "@/lib/prisma";
 import { resolveUserIdFromBearer } from "@/lib/api-token";
@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   let userId: string | null = null;
 
-  const session = await auth();
+  const session = await safeAuth();
   if (session?.user?.id) {
     userId = session.user.id;
   } else {

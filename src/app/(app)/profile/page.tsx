@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { auth } from "@/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { DbSetupNotice } from "@/components/db-setup-notice";
 import { ProfileAccountForms } from "@/components/profile-account-forms";
 import { prisma } from "@/lib/prisma";
 
 export default async function ProfilePage() {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) return null;
 
   let name: string | null = null;
