@@ -1,0 +1,16 @@
+services:
+  read-later:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # Public URL of this app (required for NextAuth and the browser extension)
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env or the shell}
+      DATABASE_URL: file:/data/prod.db
+    volumes:
+      - read-later-data:/data
+    restart: unless-stopped
+
+volumes:
+  read-later-data:

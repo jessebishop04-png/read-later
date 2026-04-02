@@ -1,0 +1,44 @@
+{
+  "name": "read-later",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev-no-npm.cjs",
+    "dev:next-only": "node scripts/onedrive-next-setup.cjs && node scripts/next-with-modules-path.cjs",
+    "clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true});console.log('Removed .next');}catch(e){if(e.code!=='ENOENT')throw e;}\"",
+    "dev:clean": "npm run clean && node scripts/dev-no-npm.cjs",
+    "build": "node scripts/onedrive-next-setup.cjs && node scripts/prisma-cli.cjs generate --no-hints && node scripts/next-with-modules-path.cjs build",
+    "start": "node scripts/next-with-modules-path.cjs start",
+    "lint": "eslint",
+    "postinstall": "node scripts/prisma-cli.cjs generate --no-hints",
+    "db:push": "node scripts/prisma-cli.cjs db push",
+    "db:generate": "node scripts/prisma-cli.cjs generate",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "@prisma/client": "6.19.2",
+    "bcryptjs": "^2.4.3",
+    "jsdom": "^25.0.1",
+    "next": "15.5.14",
+    "next-auth": "^5.0.0-beta.25",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "15.5.14",
+    "postcss": "^8.4.49",
+    "prisma": "6.19.2",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  }
+}

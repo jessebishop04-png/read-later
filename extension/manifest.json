@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Read Later Save",
+  "version": "1.0.0",
+  "description": "Save the current tab to your Read Later library",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["http://localhost:3000/*", "https://*/*"],
+  "action": {
+    "default_title": "Save to Read Later",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        width: 280px;
+        padding: 12px;
+        margin: 0;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 4px;
+        color: #444;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      button.primary {
+        width: 100%;
+        padding: 10px;
+        background: #b45309;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.secondary {
+        width: 100%;
+        padding: 8px;
+        margin-top: 8px;
+        background: #444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.linkish {
+        width: 100%;
+        margin-top: 10px;
+        padding: 6px;
+        background: transparent;
+        color: #666;
+        border: none;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      #status {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #666;
+        word-break: break-word;
+      }
+      .error {
+        color: #b91c1c;
+      }
+      .ok {
+        color: #15803d;
+      }
+      .hidden {
+        display: none !important;
+      }
+      #connectedHint {
+        font-size: 12px;
+        color: #15803d;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="simpleView">
+      <p id="connectedHint" class="hidden">Ready to save to your library.</p>
+      <button id="savePage" class="primary" type="button">Save this tab</button>
+      <button id="toggleSettings" class="linkish hidden" type="button">Connection settings</button>
+    </div>
+
+    <div id="settingsPanel" class="hidden">
+      <label for="baseUrl">App URL</label>
+      <input id="baseUrl" type="url" placeholder="http://localhost:3000" autocomplete="off" />
+      <label for="token">API token</label>
+      <input id="token" type="password" placeholder="From Settings → API token" autocomplete="off" />
+      <button id="saveOptions" class="secondary" type="button">Save connection</button>
+    </div>
+
+    <p id="status"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

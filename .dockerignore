@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+*.md
+extension
+.vscode
+.cursor
+npm-debug.log*
+tsconfig.tsbuildinfo
