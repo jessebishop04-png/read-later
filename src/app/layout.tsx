@@ -1,71 +1,78 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Inter, Literata, Lora, Merriweather, Source_Sans_3 } from "next/font/google";
+import {
+  Cormorant_Garamond,
+  Inter,
+  Libre_Baskerville,
+  Manrope,
+  Source_Serif_4,
+} from "next/font/google";
 import { AppearanceInit } from "@/components/appearance-init";
 import { Providers } from "@/components/providers";
 import { RegisterServiceWorker } from "@/components/register-sw";
 import "./globals.css";
+import "./landing.css";
 
-const literata = Literata({
-  subsets: ["latin"],
-  variable: "--font-literata",
-  display: "swap",
-});
-
-const sourceSans = Source_Sans_3({
-  subsets: ["latin"],
-  variable: "--font-source-sans",
-  display: "swap",
-});
-
+/** Sans 1 — Inter */
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
 
-const dmSans = DM_Sans({
+/** Sans 3 — Manrope (Satoshi loads via Fontshare link) */
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--font-manrope",
   display: "swap",
 });
 
-const lora = Lora({
+/**
+ * Serif slots labeled Airif / Braveold / Cita Pro in the UI.
+ * Free web-safe stand-ins until those commercial files are added under /public/fonts.
+ */
+const airif = Source_Serif_4({
   subsets: ["latin"],
-  variable: "--font-lora",
+  variable: "--font-airif",
   display: "swap",
 });
 
-const merriweather = Merriweather({
+const braveold = Libre_Baskerville({
   weight: ["400", "700"],
   subsets: ["latin"],
-  variable: "--font-merriweather",
+  variable: "--font-braveold",
+  display: "swap",
+});
+
+const citaPro = Cormorant_Garamond({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-cita-pro",
   display: "swap",
 });
 
 const fontVariables = [
-  literata.variable,
-  sourceSans.variable,
   inter.variable,
-  dmSans.variable,
-  lora.variable,
-  merriweather.variable,
+  manrope.variable,
+  airif.variable,
+  braveold.variable,
+  citaPro.variable,
 ].join(" ");
 
 export const metadata: Metadata = {
-  title: "Read Later — personal library",
+  title: "Keepr — personal library",
   description: "Save articles and videos, read distraction-free, sync your library.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Read Later",
+    title: "Keepr",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafaf9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0a09" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 };
 
@@ -76,6 +83,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={fontVariables} suppressHydrationWarning>
+      <head>
+        {/* Satoshi — Fontshare (free for web via their CDN) */}
+        <link
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="min-h-screen font-sans">
         <AppearanceInit />
         <Providers>

@@ -25,12 +25,13 @@ export default async function TagsPage() {
 
   return (
     <div>
-      <p className="text-stone-600 dark:text-stone-400">
+      <h1 className="text-3xl font-bold text-white">Tags</h1>
+      <p className="mt-2 text-[color:var(--keepr-muted)]">
         Jump to saved items by tag. Tag filters apply to your main library (non-archived by default).
       </p>
 
       {tags.length === 0 ? (
-        <p className="mt-10 text-center text-stone-500 dark:text-stone-400">
+        <p className="mt-10 text-center text-[color:var(--keepr-muted)]">
           No tags yet. Add comma-separated tags when saving a link or on any article page.
         </p>
       ) : (
@@ -39,10 +40,10 @@ export default async function TagsPage() {
             <li key={t.id}>
               <Link
                 href={`/library?tag=${encodeURIComponent(t.name)}`}
-                className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-800 shadow-sm transition hover:border-amber-300 hover:bg-amber-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:border-amber-800 dark:hover:bg-amber-950/40"
+                className="inline-flex items-center gap-2 rounded-full bg-[color:var(--keepr-elevated)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[color:var(--keepr-elevated-hover)]"
               >
                 {t.name}
-                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-[color:var(--keepr-muted)]">
                   {t._count.items}
                 </span>
               </Link>

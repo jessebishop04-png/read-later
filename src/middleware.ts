@@ -7,7 +7,9 @@ export default auth((req) => {
   if (
     req.nextUrl.pathname === "/sw.js" ||
     req.nextUrl.pathname === "/manifest.json" ||
-    req.nextUrl.pathname.startsWith("/icons/")
+    req.nextUrl.pathname.startsWith("/icons/") ||
+    req.nextUrl.pathname.startsWith("/landing/") ||
+    /\.(png|jpe?g|webp|gif|svg|mp4|webm|ico|txt)$/i.test(req.nextUrl.pathname)
   ) {
     return undefined;
   }
@@ -49,6 +51,6 @@ export default auth((req) => {
 // Railway healthchecks use Host: healthcheck.railway.app, which can trigger "invalid host header".
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|icons/|sw.js|workbox-|api/health).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|icons/|landing/|sw.js|workbox-|api/health|.*\\.(?:png|jpg|jpeg|webp|gif|svg|mp4|webm|ico|txt)$).*)",
   ],
 };

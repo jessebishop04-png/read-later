@@ -4,9 +4,9 @@ import { safeAuth } from "@/lib/safe-auth";
 import { prisma } from "@/lib/prisma";
 import { ArticleReader } from "@/components/article-reader";
 import { DbSetupNotice } from "@/components/db-setup-notice";
-import { ReadItemDetails } from "@/components/read-item-details";
+import { ReadArticleHeader } from "@/components/read-article-header";
 import { RegisterReadChrome } from "@/components/register-read-chrome";
-import { formatSavedDate } from "@/lib/format-saved-date";
+import { ReadWorkspace } from "@/components/read-workspace";
 
 export default async function ReadPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await safeAuth();
@@ -58,9 +58,27 @@ export default async function ReadPage({ params }: { params: Promise<{ id: strin
   }));
 
   return (
-    <article
-      className="rounded-2xl bg-[var(--reader-bg)] px-6 py-10 shadow-sm dark:shadow-none md:px-12 md:py-14"
-      style={{ minHeight: "60vh" }}
+    <ReadWorkspace
+      item={{
+        id: item.id,
+        title: item.title,
+        author: item.author,
+        siteName: item.siteName,
+        sourceUrl: item.sourceUrl,
+        excerpt: item.excerpt,
+        kind: item.kind,
+        createdAt: item.createdAt.toISOString(),
+        contentText: item.contentText,
+        contentHtml: item.contentHtml,
+        notes: item.notes,
+        imageUrl: item.imageUrl,
+        highlights: highlightDtos.map((h) => ({
+          id: h.id,
+          quotedText: h.quotedText,
+          color: h.color,
+          note: h.note,
+        })),
+      }}
     >
       <RegisterReadChrome
         itemId={item.id}
@@ -72,27 +90,17 @@ export default async function ReadPage({ params }: { params: Promise<{ id: strin
         folderId={item.folderId}
         folders={folders}
       />
-      <header className="mb-10">
-        <p className="text-sm text-[var(--reader-muted)]">
-          {[item.siteName, item.author].filter(Boolean).join(" · ")}
-          {(item.siteName || item.author) && (
-            <>
-              {" "}
-              ·{" "}
-            </>
-          )}
-          <time dateTime={item.createdAt.toISOString()} title={item.createdAt.toLocaleString()}>
-            Saved {formatSavedDate(item.createdAt)}
-          </time>
-        </p>
-        <h1 className="mt-2 font-serif text-3xl font-semibold leading-tight text-[var(--reader-fg)] md:text-4xl">
-          {item.title}
-        </h1>
-        {item.excerpt && (
-          <p className="mt-4 text-lg text-[var(--reader-muted)]">{item.excerpt}</p>
-        )}
-      </header>
-      <ReadItemDetails itemId={item.id} notes={item.notes} folderId={item.folderId} folders={folders} />
+
+      <ReadArticleHeader
+        title={item.title}
+        author={item.author}
+        siteName={item.siteName}
+        sourceUrl={item.sourceUrl}
+        excerpt={item.excerpt}
+        contentText={item.contentText}
+        createdAt={item.createdAt.toISOString()}
+      />
+
       <ArticleReader
         itemId={item.id}
         contentHtml={item.contentHtml}
@@ -101,6 +109,6 @@ export default async function ReadPage({ params }: { params: Promise<{ id: strin
         itemTitle={item.title}
         initialHighlights={highlightDtos}
       />
-    </article>
+    </ReadWorkspace>
   );
 }

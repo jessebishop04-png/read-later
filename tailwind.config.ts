@@ -11,7 +11,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["var(--font-sans-ui)", "ui-sans-serif", "system-ui", "sans-serif"],
-        serif: ["var(--font-serif-ui)", "Georgia", "Times New Roman", "serif"],
+        serif: ["var(--reader-serif-font)", "Georgia", "Times New Roman", "serif"],
       },
     },
   },

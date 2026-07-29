@@ -26,7 +26,7 @@ function initials(name: string | null, email: string | null) {
 }
 
 const menuItem =
-  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-stone-800 hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800";
+  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-white hover:bg-white/5";
 
 const menuIcon = "h-4 w-4 shrink-0 opacity-90";
 
@@ -69,7 +69,7 @@ export function NavProfileMenu({ user }: Props) {
     <div ref={rootRef} className="relative shrink-0">
       <button
         type="button"
-        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-stone-300 bg-stone-200/80 text-xs font-semibold text-stone-800 transition hover:bg-stone-300/80 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700"
+        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--keepr-elevated)] text-xs font-semibold text-white transition hover:bg-[color:var(--keepr-elevated-hover)]"
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={`Account menu for ${display}`}
@@ -91,24 +91,19 @@ export function NavProfileMenu({ user }: Props) {
 
       {open && (
         <div
-          className="absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-stone-200 bg-white py-1 shadow-lg dark:border-stone-700 dark:bg-stone-900"
+          className="absolute right-0 top-full z-50 mt-1 w-56 rounded-xl bg-[color:var(--keepr-elevated)] py-1 shadow-xl ring-1 ring-white/10"
           role="menu"
           aria-label="Account"
         >
-          <div className="border-b border-stone-100 px-3 py-2 dark:border-stone-800">
-            <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">{display}</p>
+          <div className="border-b border-white/10 px-3 py-2">
+            <p className="truncate text-sm font-medium text-white">{display}</p>
             {user.email && (
-              <p className="truncate text-xs text-stone-500 dark:text-stone-400">{user.email}</p>
+              <p className="truncate text-xs text-[color:var(--keepr-muted)]">{user.email}</p>
             )}
           </div>
-          <Link
-            href="/profile"
-            role="menuitem"
-            className={menuItem}
-            onClick={close}
-          >
+          <Link href="/account" role="menuitem" className={menuItem} onClick={close}>
             <IconUser className={menuIcon} />
-            Profile
+            Account
           </Link>
           <Link href="/settings" role="menuitem" className={menuItem} onClick={close}>
             <IconCog className={menuIcon} />
@@ -117,7 +112,7 @@ export function NavProfileMenu({ user }: Props) {
           <button
             type="button"
             role="menuitem"
-            className={`${menuItem} w-full text-red-700 dark:text-red-400`}
+            className={`${menuItem} w-full text-red-400`}
             onClick={() => signOut({ callbackUrl: "/" })}
           >
             <IconSignOut className={menuIcon} />

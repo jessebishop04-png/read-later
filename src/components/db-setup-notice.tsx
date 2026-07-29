@@ -3,7 +3,7 @@ import Link from "next/link";
 export function DbSetupNotice() {
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-stone-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-stone-100">
-      <p className="font-serif text-xl font-semibold text-amber-950 dark:text-amber-100">
+      <p className="text-xl font-semibold text-amber-950 dark:text-amber-100">
         Database needs updating
       </p>
       <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">

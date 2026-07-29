@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useOptionalReadChrome } from "@/components/read-chrome-context";
+import { useOptionalTts } from "@/components/tts-context";
+import { applyScanMarksToRoot, scrollToScanSentence } from "@/lib/scan-highlight";
+import { applyTtsHighlight, clearTtsMarks } from "@/lib/tts-highlight";
 
 export type HighlightDto = {
   id: string;
@@ -31,10 +35,10 @@ const HL_CLASS: Record<string, string> = {
 };
 
 const modalOverlay =
-  "fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[1px] dark:bg-black/60";
+  "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-[1px]";
 
 const modalPanel =
-  "max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-200 bg-white p-6 shadow-xl dark:border-stone-700 dark:bg-stone-900";
+  "max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[color:var(--keepr-elevated)] p-6 text-white shadow-xl ring-1 ring-white/10";
 
 function textLengthBeforeNode(block: HTMLElement, target: Node, targetOffset: number): number {
   let len = 0;
@@ -135,6 +139,9 @@ export function ArticleReader({
   initialHighlights,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const tts = useOptionalTts();
+  const chrome = useOptionalReadChrome();
+  const scanOverlay = chrome?.readerScanOverlay ?? null;
   /** Ignores mouseup when interacting with the new-highlight toolbar (clicking note/colors was collapsing selection and closing the popup). */
   const selPopupRef = useRef<HTMLDivElement>(null);
   const [highlights, setHighlights] = useState(initialHighlights);
@@ -210,6 +217,44 @@ export function ArticleReader({
     assignBlockIds(root);
     applyHighlights(root, highlights);
   }, [contentHtml, kind, highlights]);
+
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root || kind === "video") return;
+    applyScanMarksToRoot(
+      root,
+      scanOverlay?.sentences ?? [],
+      scanOverlay?.selectedIndex ?? null
+    );
+  }, [contentHtml, kind, highlights, scanOverlay?.sentences, scanOverlay?.selectedIndex]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || kind === "video" || !scanOverlay) return;
+
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      const mark = target?.closest?.("[data-scan-sentence]") as HTMLElement | null;
+      if (!mark) return;
+      const idx = Number(mark.dataset.scanSentence);
+      if (Number.isFinite(idx)) scanOverlay.setSelectedIndex(idx);
+    };
+
+    root.addEventListener("click", onClick);
+    return () => root.removeEventListener("click", onClick);
+  }, [kind, scanOverlay]);
+
+  useEffect(() => {
+    if (scanOverlay?.selectedIndex == null) return;
+    scrollToScanSentence(rootRef.current, scanOverlay.selectedIndex);
+  }, [scanOverlay?.selectedIndex]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || kind === "video") return;
+    applyTtsHighlight(root, tts?.highlight ?? null);
+    return () => clearTtsMarks(root);
+  }, [tts?.highlight, contentHtml, kind, highlights, scanOverlay?.sentences]);
 
   useEffect(() => {
     if (kind === "video") return;
@@ -409,14 +454,14 @@ export function ArticleReader({
         >
           <h2
             id="highlight-note-title"
-            className="font-serif text-xl font-semibold text-stone-900 dark:text-stone-100"
+            className="text-xl font-semibold text-white"
           >
             Highlight note
           </h2>
-          <blockquote className="mt-4 border-l-4 border-amber-400/80 pl-4 text-sm italic text-stone-700 dark:text-stone-300">
+          <blockquote className="mt-4 border-l-4 border-white/30 pl-4 text-sm italic text-[color:var(--keepr-muted)]">
             {highlightModal.quotedText}
           </blockquote>
-          <label htmlFor="highlight-note-field" className="mt-6 block text-xs font-medium text-stone-500">
+          <label htmlFor="highlight-note-field" className="mt-6 block text-xs font-medium text-[color:var(--keepr-faint)]">
             Your note
           </label>
           <textarea
@@ -425,14 +470,14 @@ export function ArticleReader({
             onChange={(e) => setModalNoteDraft(e.target.value)}
             rows={4}
             placeholder="Why this stood out, ideas, follow-ups…"
-            className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-950"
+            className="mt-2 w-full rounded-lg border border-white/15 bg-[color:var(--keepr-pill)] px-3 py-2 text-sm text-white placeholder:text-[color:var(--keepr-faint)] focus:border-white/35 focus:outline-none"
           />
           <div className="mt-6 flex flex-wrap gap-2">
             <button
               type="button"
               disabled={savingModal}
               onClick={() => void saveModalNote()}
-              className="rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-50 dark:bg-amber-600"
+              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-200 disabled:opacity-50"
             >
               {savingModal ? "Saving…" : "Save note"}
             </button>
@@ -440,7 +485,7 @@ export function ArticleReader({
               type="button"
               disabled={savingModal}
               onClick={() => setHighlightModal(null)}
-              className="rounded-lg border border-stone-300 px-4 py-2 text-sm dark:border-stone-600"
+              className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white hover:bg-white/10"
             >
               Cancel
             </button>
@@ -448,7 +493,7 @@ export function ArticleReader({
               type="button"
               disabled={savingModal}
               onClick={() => void removeFromModal()}
-              className="rounded-lg border border-red-200 px-4 py-2 text-sm text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+              className="rounded-lg px-4 py-2 text-sm text-red-400 hover:bg-red-950/40"
             >
               Remove highlight
             </button>
@@ -471,8 +516,8 @@ export function ArticleReader({
             allowFullScreen
           />
         </div>
-        <p className="text-center text-sm text-[var(--reader-muted)]">
-          Use <strong>Original</strong> in the top bar to open the source page.
+        <p className="text-center text-sm text-[color:var(--keepr-muted)]">
+          Use <strong className="text-white">Original</strong> in the top bar to open the source page.
         </p>
       </div>
     );
@@ -485,11 +530,11 @@ export function ArticleReader({
       {selPopup && (
         <div
           ref={selPopupRef}
-          className="fixed z-50 flex max-w-[min(100vw-2rem,20rem)] -translate-x-1/2 -translate-y-full flex-col gap-2 rounded-lg border border-stone-200 bg-white p-3 shadow-xl dark:border-stone-700 dark:bg-stone-900"
+          className="fixed z-50 flex max-w-[min(100vw-2rem,20rem)] -translate-x-1/2 -translate-y-full flex-col gap-2 rounded-xl bg-[color:var(--keepr-elevated)] p-3 shadow-xl ring-1 ring-white/10"
           style={{ left: selPopup.x, top: selPopup.y - 8 }}
         >
-          <label htmlFor="new-hl-note" className="text-xs font-medium text-stone-500">
-            Note <span className="font-normal text-stone-400">(optional)</span>
+          <label htmlFor="new-hl-note" className="text-xs font-medium text-[color:var(--keepr-faint)]">
+            Note <span className="font-normal">(optional)</span>
           </label>
           <textarea
             id="new-hl-note"
@@ -498,9 +543,9 @@ export function ArticleReader({
             rows={3}
             placeholder="Add a note, or leave blank…"
             autoFocus
-            className="w-full resize-y rounded-md border border-stone-200 bg-stone-50 px-2 py-1.5 text-sm text-stone-800 placeholder:text-stone-400 dark:border-stone-600 dark:bg-stone-950 dark:text-stone-100"
+            className="w-full resize-y rounded-lg border border-white/15 bg-[color:var(--keepr-pill)] px-2 py-1.5 text-sm text-white placeholder:text-[color:var(--keepr-faint)] focus:border-white/35 focus:outline-none"
           />
-          <p className="text-xs text-stone-500 dark:text-stone-400">Highlight color</p>
+          <p className="text-xs text-[color:var(--keepr-faint)]">Highlight color</p>
           <div className="flex flex-wrap items-center gap-1">
             {(["amber", "green", "blue", "rose"] as const).map((c) => (
               <button
@@ -510,7 +555,7 @@ export function ArticleReader({
                 aria-pressed={color === c}
                 onClick={() => setColor(c)}
                 className={`h-7 w-7 rounded-full border-2 ${
-                  color === c ? "border-stone-800 dark:border-white" : "border-transparent"
+                  color === c ? "border-white" : "border-transparent"
                 } ${
                   c === "amber"
                     ? "bg-amber-300"
@@ -522,13 +567,13 @@ export function ArticleReader({
                 }`}
               />
             ))}
-            <span className="ml-1 text-[11px] text-stone-400">defaults to amber</span>
+            <span className="ml-1 text-[11px] text-[color:var(--keepr-faint)]">defaults to amber</span>
           </div>
           <button
             type="button"
             disabled={savingNew}
             onClick={() => void saveHighlight()}
-            className="rounded-md bg-amber-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-50 dark:bg-amber-600"
+            className="rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-black hover:bg-neutral-200 disabled:opacity-50"
           >
             {savingNew ? "Saving…" : "Save highlight"}
           </button>
@@ -537,23 +582,23 @@ export function ArticleReader({
 
       <div
         ref={rootRef}
-        className="reader-prose font-serif text-lg leading-relaxed"
+        className="reader-prose"
         suppressHydrationWarning
       />
 
       {highlights.length > 0 && (
-        <aside className="mt-12 border-t border-stone-200 pt-8 dark:border-stone-800">
-          <h2 className="font-sans text-sm font-semibold uppercase tracking-wide text-stone-500">
+        <aside className="mt-12 border-t border-white/10 pt-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--keepr-faint)]">
             Highlights
           </h2>
           <ul className="mt-4 space-y-3">
             {highlights.map((h) => (
               <li
                 key={h.id}
-                className="rounded-lg bg-stone-100/80 p-3 dark:bg-stone-900/80"
+                className="rounded-xl bg-[color:var(--keepr-elevated)] p-3"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <span className="text-sm text-stone-700 dark:text-stone-300">{h.quotedText}</span>
+                  <span className="text-sm text-white/90">{h.quotedText}</span>
                   <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
                     <button
                       type="button"
@@ -564,21 +609,21 @@ export function ArticleReader({
                           note: h.note ?? "",
                         })
                       }
-                      className="rounded-md px-2 py-1 text-xs font-medium text-amber-800 ring-1 ring-amber-200 hover:bg-amber-50 dark:text-amber-300 dark:ring-amber-900 dark:hover:bg-amber-950/40"
+                      className="rounded-md px-2 py-1 text-xs font-medium text-white/80 ring-1 ring-white/15 hover:bg-white/10"
                     >
                       {h.note?.trim() ? "Edit note" : "Add note"}
                     </button>
                     <button
                       type="button"
                       onClick={() => void removeHighlight(h.id)}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-stone-600 ring-1 ring-stone-200 hover:bg-red-50 hover:text-red-700 hover:ring-red-200 dark:text-stone-400 dark:ring-stone-600 dark:hover:bg-red-950/40 dark:hover:text-red-300"
+                      className="rounded-md px-2 py-1 text-xs font-medium text-[color:var(--keepr-muted)] ring-1 ring-white/10 hover:bg-red-950/40 hover:text-red-300"
                     >
                       Remove
                     </button>
                   </div>
                 </div>
                 {h.note?.trim() ? (
-                  <p className="mt-2 border-t border-stone-200/80 pt-2 text-sm text-stone-600 dark:border-stone-700 dark:text-stone-400">
+                  <p className="mt-2 border-t border-white/10 pt-2 text-sm text-[color:var(--keepr-muted)]">
                     {h.note}
                   </p>
                 ) : null}

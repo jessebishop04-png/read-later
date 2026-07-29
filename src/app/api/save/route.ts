@@ -4,6 +4,7 @@ import { extractFromUrl } from "@/lib/extract";
 import { prisma } from "@/lib/prisma";
 import { resolveUserIdFromBearer } from "@/lib/api-token";
 import { normalizeUrlInput } from "@/lib/normalize-url";
+import { scheduleReindex } from "@/lib/search-index";
 
 export const runtime = "nodejs";
 
@@ -29,7 +30,8 @@ export async function POST(req: Request) {
     }
     const url = normalizeUrlInput(raw);
 
-    const extracted = await extractFromUrl(url);
+    const pageHtml = typeof body.html === "string" ? body.html : null;
+    const extracted = await extractFromUrl(url, { html: pageHtml });
 
     const item = await prisma.savedItem.create({
       data: {
@@ -46,6 +48,8 @@ export async function POST(req: Request) {
         kind: extracted.kind,
       },
     });
+
+    scheduleReindex(item.id);
 
     return NextResponse.json({
       id: item.id,

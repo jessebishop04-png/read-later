@@ -1,5 +1,5 @@
 /* global self, caches, fetch */
-const CACHE = "read-later-v1";
+const CACHE = "keepr-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -25,6 +25,11 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  // Don't cache during local dev — stale SW responses look like "endless loading".
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(

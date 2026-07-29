@@ -1,6 +1,6 @@
-# Read Later
+# Keepr
 
-Personal read-later library: save articles and video links, read in a distraction-free view, **like** items, **notes** per article, **folders**, tags, highlights, a **side drawer** (Home, Liked, Archive, Videos, Notes, Tags), and a PWA for offline access to cached pages.
+Personal library: save articles and video links, read in a distraction-free view, **like** items, **notes** per article, **folders**, tags, highlights, a **side drawer** (Home, Liked, Archive, Videos, Notes, Tags), and a PWA for offline access to cached pages.
 
 ## Stack
 
@@ -64,10 +64,12 @@ If you see **`'next' is not recognized`**, delete the `read-later/node_modules` 
 
 ## Production notes
 
-- Use a hosted **PostgreSQL** database and set `DATABASE_URL`.
+- Use a hosted **PostgreSQL** database (Neon, Vercel Postgres, or Supabase) and set `DATABASE_URL`.
 - Set `NEXTAUTH_URL` to your public origin and a strong `AUTH_SECRET`.
 - Build: `npm run build` then `npm start`.
+- **Vercel:** connect the GitHub repo, set env vars (`DATABASE_URL`, `AUTH_SECRET`, `NEXTAUTH_URL`, plus optional `OPENAI_API_KEY` / `GPTZERO_API_KEY`). The `vercel-build` script runs `prisma migrate deploy` then `next build`.
 - Many sites block server-side fetching; extraction may fail—users can still open the original link.
+- Uploaded files under `public/uploads` and `public/avatars` are ephemeral on Vercel — use object storage later if you need persistence.
 
 ### Docker (SQLite on a volume)
 

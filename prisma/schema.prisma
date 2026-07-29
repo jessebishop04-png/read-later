@@ -3,23 +3,28 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  accounts      Account[]
-  sessions      Session[]
-  items         SavedItem[]
-  tags          Tag[]
-  apiTokens     ApiToken[]
-  folders       Folder[]
+  id                String    @id @default(cuid())
+  name              String?
+  email             String    @unique
+  emailVerified     DateTime?
+  image             String?
+  passwordHash      String?
+  inboundEmailLocal String?   @unique
+  accounts          Account[]
+  sessions          Session[]
+  items             SavedItem[]
+  tags              Tag[]
+  apiTokens         ApiToken[]
+  folders           Folder[]
+  scanResults       ScanResult[]
+  reviewTemplates   ReviewTemplate[]
+  reviewRuns        ReviewRun[]
+  plagiarismRuns    PlagiarismRun[]
 }
 
 model Account {
@@ -79,33 +84,110 @@ model Folder {
 }
 
 model SavedItem {
-  id           String      @id @default(cuid())
-  userId       String
-  folderId     String?
-  sourceUrl    String
-  title        String
-  author       String?
-  excerpt      String?
-  siteName     String?
-  contentHtml  String
-  contentText  String?
-  imageUrl     String?
-  embedUrl     String?
-  kind         String      @default("article")
-  readAt       DateTime?
-  archived     Boolean     @default(false)
-  liked        Boolean     @default(false)
-  likedAt      DateTime?
-  notes        String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  folder       Folder?     @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  tags         ItemTag[]
-  highlights   Highlight[]
+  id             String      @id @default(cuid())
+  userId         String
+  folderId       String?
+  sourceUrl      String
+  title          String
+  author         String?
+  excerpt        String?
+  siteName       String?
+  contentHtml    String
+  contentText    String?
+  imageUrl       String?
+  embedUrl       String?
+  kind           String      @default("article")
+  emailFrom      String?
+  emailMessageId String?
+  readAt         DateTime?
+  archived       Boolean     @default(false)
+  liked          Boolean     @default(false)
+  likedAt        DateTime?
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder         Folder?     @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags           ItemTag[]
+  highlights     Highlight[]
+  searchChunks   SearchChunk[]
+  scanResults    ScanResult[]
+  reviewRuns     ReviewRun[]
+  plagiarismRuns PlagiarismRun[]
 
   @@index([userId])
   @@index([folderId])
+  @@unique([userId, emailMessageId])
+}
+
+model ScanResult {
+  id         String     @id @default(cuid())
+  userId     String
+  itemId     String?
+  source     String
+  title      String?
+  inputText  String
+  wordCount  Int
+  scansRun   String
+  resultJson String
+  createdAt  DateTime   @default(now())
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item       SavedItem? @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, itemId])
+}
+
+model PlagiarismRun {
+  id         String     @id @default(cuid())
+  userId     String
+  itemId     String?
+  source     String
+  inputText  String
+  resultJson String
+  createdAt  DateTime   @default(now())
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item       SavedItem? @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, itemId])
+}
+
+model ReviewTemplate {
+  id           String      @id @default(cuid())
+  userId       String?
+  name         String
+  category     String
+  description  String?
+  instructions String
+  tone         String?
+  gradeLevel   String?
+  isBuiltin    Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  user         User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews      ReviewRun[]
+
+  @@index([userId])
+  @@index([isBuiltin, category])
+}
+
+model ReviewRun {
+  id         String          @id @default(cuid())
+  userId     String
+  templateId String?
+  itemId     String?
+  source     String
+  inputText  String
+  resultJson String
+  createdAt  DateTime        @default(now())
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template   ReviewTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  item       SavedItem?      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, itemId])
+  @@index([templateId])
 }
 
 model Tag {
@@ -138,4 +220,22 @@ model Highlight {
   note             String?
   createdAt        DateTime  @default(now())
   item             SavedItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+model SearchChunk {
+  id          String    @id @default(cuid())
+  userId      String
+  itemId      String
+  source      String
+  sourceId    String?
+  chunkIndex  Int
+  text        String
+  embedding   String
+  contentHash String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  item        SavedItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([userId, itemId])
+  @@index([userId])
 }

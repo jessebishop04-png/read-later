@@ -227,6 +227,16 @@ export async function PATCH(req: Request, context: RouteContext) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  const shouldReindex =
+    hasTitle ||
+    hasExcerpt ||
+    "notes" in body ||
+    (typeof body.tags === "object" && Array.isArray(body.tags));
+  if (shouldReindex) {
+    const { scheduleReindex } = await import("@/lib/search-index");
+    scheduleReindex(id);
+  }
+
   return NextResponse.json({
     id: updated.id,
     title: updated.title,

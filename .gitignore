@@ -42,5 +42,23 @@ yarn-error.log*
 /public/avatars/*
 !/public/avatars/.gitkeep
 
+# user-uploaded PDFs
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # typescript
 next-env.d.ts
+
+# local / editor
+.cursor/
+.cursor-video-study/
+/prisma/migrations_sqlite_archive/
+
+# unused generated landing media (print Earth uses map + pencil PNGs)
+/public/landing/*.mp4
+/public/landing/hero-poster.jpg
+/public/landing/hero-still.png
+/public/landing/earth-night.jpg
+/public/landing/earth-globe.png
+/public/landing/earth-print-ref.png
+/public/landing/higgsfield-prompt.txt

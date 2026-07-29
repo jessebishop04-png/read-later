@@ -28,23 +28,22 @@ type Props = {
 };
 
 const menuBtn =
-  "rounded-lg p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100";
+  "rounded-lg p-2 text-[color:var(--keepr-muted)] transition hover:bg-white/5 hover:text-white";
 
 const menuItem =
-  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-stone-800 hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800";
+  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-white hover:bg-white/5";
 
 const menuIcon = "h-4 w-4 shrink-0 opacity-90";
 
-const modalTitleIcon =
-  "h-5 w-5 shrink-0 text-amber-800 opacity-95 dark:text-amber-400";
+const modalTitleIcon = "h-5 w-5 shrink-0 text-white opacity-95";
 
 const btnIcon = "h-4 w-4 shrink-0";
 
 const modalOverlay =
-  "fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[1px] dark:bg-black/60";
+  "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-[1px]";
 
 const modalPanel =
-  "max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-200 bg-white p-6 shadow-xl dark:border-stone-700 dark:bg-stone-900";
+  "max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[color:var(--keepr-elevated)] p-6 text-white shadow-xl ring-1 ring-white/10";
 
 export function LibraryItemMenu({
   itemId,
@@ -254,17 +253,17 @@ export function LibraryItemMenu({
         >
           <h2
             id={`edit-dialog-title-${itemId}`}
-            className="flex items-center gap-2.5 font-serif text-xl font-semibold text-stone-900 dark:text-stone-100"
+            className="flex items-center gap-2.5 text-xl font-semibold text-white"
           >
             <IconPencil className={modalTitleIcon} />
             Edit
           </h2>
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+          <p className="mt-1 text-sm text-[color:var(--keepr-muted)]">
             Updating the URL does not reload the saved article text.
           </p>
           <form className="mt-4 flex flex-col gap-3" onSubmit={saveEdit}>
             <div>
-              <label htmlFor={`modal-title-${itemId}`} className="text-xs font-medium text-stone-500">
+              <label htmlFor={`modal-title-${itemId}`} className="text-xs font-medium text-[color:var(--keepr-faint)]">
                 Title
               </label>
               <input
@@ -272,11 +271,11 @@ export function LibraryItemMenu({
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-950"
+                className="mt-1 w-full rounded-lg border-0 bg-[color:var(--keepr-pill)] px-3 py-2 text-sm text-white"
               />
             </div>
             <div>
-              <label htmlFor={`modal-url-${itemId}`} className="text-xs font-medium text-stone-500">
+              <label htmlFor={`modal-url-${itemId}`} className="text-xs font-medium text-[color:var(--keepr-faint)]">
                 Source URL
               </label>
               <input
@@ -284,12 +283,12 @@ export function LibraryItemMenu({
                 type="url"
                 value={editUrl}
                 onChange={(e) => setEditUrl(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-950"
+                className="mt-1 w-full rounded-lg border-0 bg-[color:var(--keepr-pill)] px-3 py-2 text-sm text-white"
                 placeholder="https://"
               />
             </div>
             <div>
-              <label htmlFor={`modal-excerpt-${itemId}`} className="text-xs font-medium text-stone-500">
+              <label htmlFor={`modal-excerpt-${itemId}`} className="text-xs font-medium text-[color:var(--keepr-faint)]">
                 Description
               </label>
               <textarea
@@ -297,7 +296,7 @@ export function LibraryItemMenu({
                 value={editExcerpt}
                 onChange={(e) => setEditExcerpt(e.target.value)}
                 rows={3}
-                className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-950"
+                className="mt-1 w-full rounded-lg border-0 bg-[color:var(--keepr-pill)] px-3 py-2 text-sm text-white"
                 placeholder="Optional"
               />
             </div>
@@ -310,7 +309,7 @@ export function LibraryItemMenu({
               <button
                 type="submit"
                 disabled={busy}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-50 dark:bg-amber-600"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-200 disabled:opacity-50"
               >
                 <IconCheck className={btnIcon} />
                 Save
@@ -319,7 +318,7 @@ export function LibraryItemMenu({
                 type="button"
                 disabled={busy}
                 onClick={closeEdit}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-stone-300 px-4 py-2 text-sm dark:border-stone-600"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[color:var(--keepr-pill)] px-4 py-2 text-sm text-white hover:bg-[color:var(--keepr-elevated-hover)]"
               >
                 <IconX className={btnIcon} />
                 Cancel
@@ -351,7 +350,7 @@ export function LibraryItemMenu({
         >
           <h2
             id={`tag-dialog-title-${itemId}`}
-            className="flex items-center gap-2.5 font-serif text-xl font-semibold text-stone-900 dark:text-stone-100"
+            className="flex items-center gap-2.5 text-xl font-semibold text-white"
           >
             <IconTag className={modalTitleIcon} />
             Add tag
@@ -361,7 +360,7 @@ export function LibraryItemMenu({
               {tagNames.map((name) => (
                 <span
                   key={name}
-                  className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600 dark:bg-stone-800 dark:text-stone-400"
+                  className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-[color:var(--keepr-muted)]"
                 >
                   {name}
                 </span>
@@ -370,7 +369,7 @@ export function LibraryItemMenu({
           )}
           <form className="mt-4 flex flex-col gap-3" onSubmit={submitTag}>
             <div>
-              <label htmlFor={`modal-tag-${itemId}`} className="text-xs font-medium text-stone-500">
+              <label htmlFor={`modal-tag-${itemId}`} className="text-xs font-medium text-[color:var(--keepr-faint)]">
                 New tag
               </label>
               <input
@@ -378,7 +377,7 @@ export function LibraryItemMenu({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 placeholder="Tag name"
-                className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-950"
+                className="mt-1 w-full rounded-lg border-0 bg-[color:var(--keepr-pill)] px-3 py-2 text-sm text-white"
                 autoFocus
               />
             </div>
@@ -386,7 +385,7 @@ export function LibraryItemMenu({
               <button
                 type="submit"
                 disabled={busy || !tagInput.trim()}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-50 dark:bg-amber-600"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-200 disabled:opacity-50"
               >
                 <IconPlusSmall className={btnIcon} />
                 Add tag
@@ -395,7 +394,7 @@ export function LibraryItemMenu({
                 type="button"
                 disabled={busy}
                 onClick={closeTag}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-stone-300 px-4 py-2 text-sm dark:border-stone-600"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[color:var(--keepr-pill)] px-4 py-2 text-sm text-white hover:bg-[color:var(--keepr-elevated-hover)]"
               >
                 <IconX className={btnIcon} />
                 Cancel
@@ -432,7 +431,7 @@ export function LibraryItemMenu({
 
       {menuOpen && (
         <div
-          className="absolute right-0 top-full z-50 mt-0.5 min-w-[12rem] rounded-lg border border-stone-200 bg-white py-1 shadow-lg dark:border-stone-700 dark:bg-stone-900"
+          className="absolute right-0 top-full z-50 mt-0.5 min-w-[12rem] rounded-xl bg-[color:var(--keepr-elevated)] py-1 shadow-xl ring-1 ring-white/10"
           role="menu"
           aria-label="Saved item actions"
         >

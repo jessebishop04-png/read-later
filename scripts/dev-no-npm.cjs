@@ -96,6 +96,10 @@ if (isOneDrive(root)) {
 }
 
 const devPort = process.env.READ_LATER_PORT || "3000";
+const authUrl = `http://localhost:${devPort}`;
+// Keep Auth.js callback/cookie origin aligned with the actual dev port (often 3001).
+process.env.NEXTAUTH_URL = authUrl;
+process.env.AUTH_URL = authUrl;
 console.log("\nhttp://localhost:" + devPort + "\n");
 
 let nodeExeDir;
@@ -111,6 +115,8 @@ spawn(node, [nextBin, "dev", "-p", String(devPort)], {
   cwd: root,
   env: {
     ...process.env,
+    NEXTAUTH_URL: authUrl,
+    AUTH_URL: authUrl,
     PATH: `${pathPrefix}${process.env.PATH || ""}`,
     NODE_PATH: nodePathEnv.NODE_PATH,
     DATABASE_URL: process.env.DATABASE_URL,

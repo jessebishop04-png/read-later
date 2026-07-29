@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Read Later Save",
-  "version": "1.0.0",
-  "description": "Save the current tab to your Read Later library",
-  "permissions": ["storage", "activeTab"],
-  "host_permissions": ["http://localhost:3000/*", "https://*/*"],
+  "name": "Keepr Save",
+  "version": "1.0.2",
+  "description": "Save the current tab to your Keepr library",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["http://localhost:3000/*", "http://localhost:3001/*", "https://*/*"],
   "action": {
-    "default_title": "Save to Read Later",
+    "default_title": "Save to Keepr",
     "default_popup": "popup.html"
   },
   "background": {

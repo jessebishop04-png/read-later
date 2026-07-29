@@ -87,9 +87,47 @@ savePageBtn.addEventListener("click", async () => {
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.url) {
+    if (!tab?.url || tab.id == null) {
       setStatus("No active tab URL.", "error");
       return;
+    }
+
+    // Capture the live page HTML so sites that block server fetches still save (Instapaper-style).
+    // Scroll first so lazy-loaded article bodies are in the DOM.
+    let pageHtml = null;
+    try {
+      const [{ result }] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: async () => {
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          try {
+            const docEl = document.documentElement;
+            const body = document.body;
+            const height = Math.max(
+              body?.scrollHeight || 0,
+              docEl?.scrollHeight || 0,
+              body?.offsetHeight || 0
+            );
+            const step = Math.max(window.innerHeight || 600, 500);
+            for (let y = 0; y < Math.min(height, 12_000); y += step) {
+              window.scrollTo(0, y);
+              await sleep(90);
+            }
+            window.scrollTo(0, 0);
+            await sleep(250);
+          } catch {
+            /* ignore scroll errors */
+          }
+          const html = document.documentElement?.outerHTML || "";
+          // Cap size to keep the request reasonable.
+          return html.length > 1_500_000 ? html.slice(0, 1_500_000) : html;
+        },
+      });
+      if (typeof result === "string" && result.length > 200) {
+        pageHtml = result;
+      }
+    } catch {
+      // Restricted pages (chrome://, PDF viewer, etc.) — fall back to URL-only save.
     }
 
     const res = await fetch(`${baseUrl}/api/save`, {
@@ -98,7 +136,7 @@ savePageBtn.addEventListener("click", async () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ url: tab.url }),
+      body: JSON.stringify({ url: tab.url, html: pageHtml }),
     });
 
     const data = await res.json().catch(() => ({}));

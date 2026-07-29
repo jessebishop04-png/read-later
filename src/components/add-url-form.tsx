@@ -8,8 +8,12 @@ export function AddUrlForm() {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [tags, setTags] = useState("");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const field =
+    "mt-1 w-full rounded-xl border-0 bg-[color:var(--keepr-elevated)] px-4 py-3 text-white placeholder:text-[color:var(--keepr-faint)] focus:outline-none focus:ring-1 focus:ring-white/20";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +24,28 @@ export function AddUrlForm() {
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean);
+
+      if (pdfFile) {
+        const fd = new FormData();
+        fd.set("file", pdfFile);
+        if (tagList.length) fd.set("tags", tagList.join(","));
+        const res = await fetch("/api/items/pdf", {
+          method: "POST",
+          credentials: "include",
+          body: fd,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(typeof data.error === "string" ? data.error : "Could not save PDF");
+          return;
+        }
+        if (typeof data.id === "string") {
+          router.push(`/read/${data.id}`);
+          router.refresh();
+        }
+        return;
+      }
+
       const normalizedUrl = normalizeUrlInput(url);
       const res = await fetch("/api/items", {
         method: "POST",
@@ -58,7 +84,7 @@ export function AddUrlForm() {
   return (
     <form onSubmit={submit} className="space-y-4">
       <div>
-        <label htmlFor="url" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+        <label htmlFor="url" className="block text-sm font-medium text-[color:var(--keepr-muted)]">
           URL
         </label>
         <input
@@ -66,15 +92,43 @@ export function AddUrlForm() {
           type="text"
           inputMode="url"
           autoComplete="url"
-          required
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://example.com/article or example.com/article"
-          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-stone-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+          onChange={(e) => {
+            setUrl(e.target.value);
+            if (e.target.value.trim()) setPdfFile(null);
+          }}
+          placeholder="https://example.com/article or …/file.pdf"
+          className={field}
+          disabled={Boolean(pdfFile)}
+          required={!pdfFile}
         />
       </div>
+
       <div>
-        <label htmlFor="tags" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+        <p className="mb-2 text-center text-xs text-[color:var(--keepr-faint)]">or</p>
+        <label htmlFor="pdf" className="block text-sm font-medium text-[color:var(--keepr-muted)]">
+          Upload PDF
+        </label>
+        <input
+          id="pdf"
+          type="file"
+          accept="application/pdf,.pdf"
+          onChange={(e) => {
+            const f = e.target.files?.[0] ?? null;
+            setPdfFile(f);
+            if (f) setUrl("");
+          }}
+          className="mt-1 block w-full text-sm text-[color:var(--keepr-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black"
+        />
+        {pdfFile && (
+          <p className="mt-1 text-xs text-[color:var(--keepr-faint)]">
+            {pdfFile.name} ({Math.round(pdfFile.size / 1024)} KB)
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="tags" className="block text-sm font-medium text-[color:var(--keepr-muted)]">
           Tags (optional)
         </label>
         <input
@@ -83,21 +137,19 @@ export function AddUrlForm() {
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           placeholder="reading, longform"
-          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-stone-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+          className={field}
         />
-        <p className="mt-1 text-xs text-stone-500">Comma-separated</p>
+        <p className="mt-1 text-xs text-[color:var(--keepr-faint)]">Comma-separated</p>
       </div>
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/50 dark:text-red-200">
-          {error}
-        </p>
+        <p className="rounded-xl bg-red-950/50 px-3 py-2 text-sm text-red-200">{error}</p>
       )}
       <button
         type="submit"
-        disabled={loading}
-        className="w-full rounded-xl bg-amber-700 py-3 font-medium text-white hover:bg-amber-800 disabled:opacity-50 dark:bg-amber-600 dark:hover:bg-amber-500"
+        disabled={loading || (!url.trim() && !pdfFile)}
+        className="w-full rounded-xl bg-white py-3.5 font-semibold text-black hover:bg-neutral-200 disabled:opacity-50"
       >
-        {loading ? "Saving…" : "Save to library"}
+        {loading ? "Saving…" : pdfFile ? "Save PDF" : "Save to library"}
       </button>
     </form>
   );

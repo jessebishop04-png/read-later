@@ -4,6 +4,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { KeeprLogo } from "@/components/keepr-logo";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -45,72 +46,62 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-app-chrome px-4">
-      <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 shadow-sm dark:border-stone-800 dark:bg-stone-900">
-        <p className="text-lg font-medium text-stone-900 dark:text-stone-50">
-          Start saving articles and videos
-        </p>
-        <form onSubmit={submit} className="mt-8 space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-              Name (optional)
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 dark:border-stone-600 dark:bg-stone-900"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 dark:border-stone-600 dark:bg-stone-900"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-              Password (min 8 characters)
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 dark:border-stone-600 dark:bg-stone-900"
-            />
-          </div>
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+    <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4">
+      <div className="w-full max-w-sm text-center">
+        <div className="mb-6 flex justify-center">
+          <KeeprLogo className="text-2xl text-white" />
+        </div>
+        <h1 className="text-2xl font-bold text-white">Create your Keepr</h1>
+        <form onSubmit={submit} className="mt-8 space-y-3 text-left">
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Name (optional)"
+            className="w-full rounded-xl border-0 bg-[#1a1a1a] px-4 py-3.5 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-white/25"
+          />
+          <input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            className="w-full rounded-xl border-0 bg-[#1a1a1a] px-4 py-3.5 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-white/25"
+          />
+          <input
+            id="password"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password (min 8 characters)"
+            className="w-full rounded-xl border-0 bg-[#1a1a1a] px-4 py-3.5 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-white/25"
+          />
+          {error && <p className="text-sm text-red-400">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-amber-700 py-3 font-medium text-white hover:bg-amber-800 disabled:opacity-50 dark:bg-amber-600"
+            className="w-full rounded-xl bg-neutral-400 py-3.5 font-semibold text-black hover:bg-neutral-300 disabled:opacity-50"
           >
-            {loading ? "Creating…" : "Sign up"}
+            {loading ? "Creating…" : "Continue"}
           </button>
         </form>
-        <p className="mt-6 text-center text-sm text-stone-600 dark:text-stone-400">
-          Already have an account?{" "}
-          <Link href="/login" className="font-medium text-amber-800 underline dark:text-amber-400">
-            Log in
-          </Link>
-        </p>
+        <p className="my-6 text-sm text-neutral-500">or</p>
+        <Link
+          href="/login"
+          className="block w-full rounded-xl bg-white py-3.5 text-center font-semibold text-black hover:bg-neutral-100"
+        >
+          Log in
+        </Link>
+        <Link href="/" className="mt-8 inline-block text-sm text-neutral-500 hover:text-white">
+          ← Keepr
+        </Link>
       </div>
-      <Link href="/" className="mt-8 text-sm text-stone-500 hover:underline">
-        ← Home
-      </Link>
     </div>
   );
 }

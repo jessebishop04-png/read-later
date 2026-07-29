@@ -1,7 +1,7 @@
 {
-  "name": "Read Later",
-  "short_name": "ReadLater",
-  "description": "Personal read-later library with distraction-free reading",
+  "name": "Keepr",
+  "short_name": "Keepr",
+  "description": "Personal library with distraction-free reading",
   "start_url": "/library",
   "display": "standalone",
   "background_color": "#faf8f5",

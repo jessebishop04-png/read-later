@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { safeAuth } from "@/lib/safe-auth";
 import { prisma } from "@/lib/prisma";
+import { scheduleReindex } from "@/lib/search-index";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -24,7 +25,7 @@ export async function POST(req: Request, context: RouteContext) {
   }
   if (item.kind === "video") {
     return NextResponse.json(
-      { error: "Highlights are only supported on articles" },
+      { error: "Highlights are only supported on articles and PDFs" },
       { status: 400 }
     );
   }
@@ -74,6 +75,8 @@ export async function POST(req: Request, context: RouteContext) {
       note,
     },
   });
+
+  scheduleReindex(itemId);
 
   return NextResponse.json({
     id: h.id,
@@ -127,6 +130,8 @@ export async function PATCH(req: Request, context: RouteContext) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  scheduleReindex(itemId);
+
   return NextResponse.json({ ok: true, note });
 }
 
@@ -158,6 +163,8 @@ export async function DELETE(req: Request, context: RouteContext) {
   if (result.count === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+
+  scheduleReindex(itemId);
 
   return NextResponse.json({ ok: true });
 }

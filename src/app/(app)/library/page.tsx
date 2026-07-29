@@ -6,8 +6,23 @@ import { prisma } from "@/lib/prisma";
 import { DbSetupNotice } from "@/components/db-setup-notice";
 import { LibraryFilters } from "@/components/library-filters";
 import { LibraryItemMenu } from "@/components/library-item-menu";
+import { HomeAddLinkBar } from "@/components/home-add-link-bar";
+import { LibraryArticleList } from "@/components/library-article-list";
+import { LibraryKindTabs } from "@/components/library-home-chrome";
+import { LibraryItemGrid } from "@/components/library-item-grid";
 import { formatSavedDate } from "@/lib/format-saved-date";
-import { buildLibraryWhere, libraryTitle, parseLibraryView } from "@/lib/library-where";
+import { buildLibraryWhere, isKindLibraryView, libraryTitle, parseLibraryView } from "@/lib/library-where";
+import { hybridSearchItemOrder } from "@/lib/semantic-search";
+import { hasOpenAIKey } from "@/lib/openai-embed";
+import { EmailsEmptyState } from "@/components/emails-empty-state";
+import { kindLabel } from "@/lib/kind-label";
+
+type LibraryRow = Prisma.SavedItemGetPayload<{
+  include: {
+    tags: { include: { tag: true } };
+    folder: { select: { name: true } };
+  };
+}>;
 
 export default async function LibraryPage({
   searchParams,
@@ -18,6 +33,7 @@ export default async function LibraryPage({
     view?: string;
     folderId?: string;
     q?: string;
+    tab?: string;
   }>;
 }) {
   const session = await safeAuth();
@@ -27,6 +43,26 @@ export default async function LibraryPage({
   let view = sp.view;
   if (sp.archived === "true") view = "archive";
 
+  const parsedView = parseLibraryView(view ?? undefined) ?? "home";
+  const isHome =
+    !sp.folderId &&
+    !sp.tag?.trim() &&
+    !sp.q?.trim() &&
+    (!view || view === "home") &&
+    sp.archived !== "true" &&
+    sp.tab !== "recent";
+  const isRecentTab =
+    !sp.folderId &&
+    !sp.tag?.trim() &&
+    !sp.q?.trim() &&
+    (!view || view === "home") &&
+    sp.archived !== "true" &&
+    sp.tab === "recent";
+  const isVideos = parsedView === "videos";
+  const isArticles = parsedView === "articles";
+  const isKindView = isKindLibraryView(parsedView);
+  const isGridView = isVideos || isArticles || Boolean(sp.folderId);
+
   const where = buildLibraryWhere(session.user.id, {
     view,
     tag: sp.tag,
@@ -34,23 +70,56 @@ export default async function LibraryPage({
     q: sp.q,
   });
 
-  type LibraryRow = Prisma.SavedItemGetPayload<{
-    include: {
-      tags: { include: { tag: true } };
-      folder: { select: { name: true } };
-    };
-  }>;
-
   let folderName: string | null = null;
   let items: LibraryRow[];
   let allTags: { name: string }[];
+  let snippets = new Map<string, string>();
+  let searchMode: "none" | "keyword" | "semantic" = sp.q?.trim() ? "keyword" : "none";
 
   try {
-    items = await prisma.savedItem.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      include: { tags: { include: { tag: true } }, folder: { select: { name: true } } },
-    });
+    if (sp.q?.trim() && hasOpenAIKey()) {
+      try {
+        const hybrid = await hybridSearchItemOrder(session.user.id, sp.q, {
+          view,
+          tag: sp.tag,
+          folderId: sp.folderId,
+          limit: 50,
+        });
+        if (hybrid) {
+          searchMode = "semantic";
+          snippets = hybrid.snippets;
+          if (hybrid.ids.length === 0) {
+            items = [];
+          } else {
+            const rows = await prisma.savedItem.findMany({
+              where: { userId: session.user.id, id: { in: hybrid.ids } },
+              include: { tags: { include: { tag: true } }, folder: { select: { name: true } } },
+            });
+            const byId = new Map(rows.map((r) => [r.id, r]));
+            items = hybrid.ids.map((id) => byId.get(id)).filter(Boolean) as LibraryRow[];
+          }
+        } else {
+          items = await prisma.savedItem.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+            include: { tags: { include: { tag: true } }, folder: { select: { name: true } } },
+          });
+        }
+      } catch (e) {
+        console.error("keepr: library semantic search failed", e);
+        items = await prisma.savedItem.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          include: { tags: { include: { tag: true } }, folder: { select: { name: true } } },
+        });
+      }
+    } else {
+      items = await prisma.savedItem.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        include: { tags: { include: { tag: true } }, folder: { select: { name: true } } },
+      });
+    }
 
     allTags = await prisma.tag.findMany({
       where: { userId: session.user.id },
@@ -69,7 +138,7 @@ export default async function LibraryPage({
     return <DbSetupNotice />;
   }
 
-  const viewTitle = libraryTitle(parseLibraryView(view ?? undefined), null);
+  const viewTitle = libraryTitle(parsedView, null);
   const title = folderName ?? (sp.folderId && !folderName ? "Folder" : viewTitle);
 
   const clearSearchParams = new URLSearchParams();
@@ -82,42 +151,91 @@ export default async function LibraryPage({
       ? `/library?${clearSearchParams.toString()}`
       : "/library";
 
+  if (isHome || isRecentTab) {
+    return (
+      <div className="mx-auto w-full max-w-3xl">
+        <h1 className="mb-4 text-2xl font-bold text-white sm:text-3xl">
+          {isRecentTab ? "Recent" : "Home"}
+        </h1>
+        <HomeAddLinkBar />
+        <LibraryArticleList
+          items={items}
+          emptyMessage="Nothing here yet. Add a link above to get started."
+        />
+      </div>
+    );
+  }
+
+  const isSimpleList =
+    !sp.folderId &&
+    !sp.q?.trim() &&
+    !sp.tag?.trim() &&
+    (parsedView === "liked" ||
+      parsedView === "archive" ||
+      parsedView === "trash" ||
+      parsedView === "notes" ||
+      isKindView);
+
+  if (isSimpleList) {
+    return (
+      <div className="mx-auto w-full max-w-3xl">
+        <h1 className="mb-6 text-2xl font-bold text-white sm:text-3xl">{viewTitle}</h1>
+        {parsedView === "emails" && items.length === 0 ? (
+          <EmailsEmptyState />
+        ) : (
+          <LibraryArticleList items={items} />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
-      <span className="sr-only">{title}</span>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold text-white">
+          {sp.q?.trim() ? "Search" : title}
+        </h1>
+      </div>
+      {sp.q?.trim() && (
+        <p className="mb-4 text-sm text-[color:var(--keepr-muted)]">
+          Results for “{sp.q.trim()}”
+          {searchMode === "semantic" ? " · meaning-based" : ""}
+        </p>
+      )}
+
+      {(isVideos || isArticles) && !sp.folderId && !sp.q?.trim() && !isSimpleList && (
+        <LibraryKindTabs
+          active={isVideos ? "videos" : isArticles ? "articles" : "all"}
+        />
+      )}
 
       <Suspense fallback={<div className="mt-6 h-8" />}>
         <LibraryFilters tags={allTags.map((t) => t.name)} currentTag={sp.tag?.trim()} />
       </Suspense>
 
-      {items.length === 0 ? (
-        <p className="mt-12 rounded-xl border border-dashed border-stone-300 bg-stone-100/50 p-8 text-center text-stone-600 dark:border-stone-700 dark:bg-stone-900/50 dark:text-stone-400">
-          {sp.q?.trim() ? (
-            <>
-              No saved items match your search.{" "}
-              <Link
-                href={clearSearchHref}
-                className="font-medium text-amber-800 underline dark:text-amber-400"
-              >
-                Clear search
-              </Link>
-            </>
-          ) : (
-            <>
-              Nothing here yet.{" "}
-              <Link href="/add" className="font-medium text-amber-800 underline dark:text-amber-400">
-                Save your first link
-              </Link>
-              .
-            </>
-          )}
+      {sp.q?.trim() && items.length === 0 ? (
+        <p className="mt-12 text-center text-[color:var(--keepr-muted)]">
+          No saved items match your search.{" "}
+          <Link href={clearSearchHref} className="text-white underline">
+            Clear search
+          </Link>
+        </p>
+      ) : isGridView || (sp.folderId && !sp.q?.trim()) ? (
+        <LibraryItemGrid items={items} />
+      ) : items.length === 0 ? (
+        <p className="mt-12 text-center text-[color:var(--keepr-muted)]">
+          Nothing here yet.{" "}
+          <Link href="/add" className="text-white underline">
+            Save your first link
+          </Link>
+          .
         </p>
       ) : (
-        <ul className="mt-8 space-y-3">
+        <ul className="mt-6 space-y-2">
           {items.map((item) => (
             <li key={item.id}>
-              <div className="relative flex gap-1 rounded-xl border border-stone-200 bg-white shadow-sm transition hover:border-amber-200 hover:shadow-md dark:border-stone-800 dark:bg-stone-900 dark:hover:border-amber-900/50">
-                <Link href={`/read/${item.id}`} className="min-w-0 min-h-0 flex-1 p-4">
+              <div className="relative flex gap-1 rounded-xl bg-[color:var(--keepr-elevated)] transition hover:bg-[color:var(--keepr-elevated-hover)]">
+                <Link href={`/read/${item.id}`} className="min-h-0 min-w-0 flex-1 p-4">
                   <div className="flex gap-4">
                     {item.imageUrl && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -126,58 +244,31 @@ export default async function LibraryPage({
                         alt=""
                         loading="lazy"
                         referrerPolicy="no-referrer"
-                        className="h-16 w-28 shrink-0 rounded-lg object-cover"
+                        className="h-16 w-16 shrink-0 rounded-lg object-cover"
                       />
                     )}
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400">
-                          {item.kind === "video" ? "Video" : "Article"}
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--keepr-muted)]">
+                        <span className="uppercase tracking-wide">
+                          {kindLabel(item.kind)}
                         </span>
-                        {item.readAt && (
-                          <span className="text-xs text-stone-400">Read</span>
-                        )}
-                        {item.notes?.trim() && (
-                          <span
-                            className="text-xs font-medium text-sky-600 dark:text-sky-400"
-                            title="Has notes"
-                          >
-                            Notes
-                          </span>
-                        )}
-                        {item.folder && (
-                          <span className="text-xs text-stone-500 dark:text-stone-400">
-                            {item.folder.name}
-                          </span>
-                        )}
-                        <time
-                          dateTime={item.createdAt.toISOString()}
-                          className="text-xs text-stone-400 dark:text-stone-500"
-                          title={`Added ${item.createdAt.toLocaleString()}`}
-                        >
+                        {item.folder && <span>{item.folder.name}</span>}
+                        <time dateTime={item.createdAt.toISOString()}>
                           {formatSavedDate(item.createdAt)}
                         </time>
                       </div>
-                      <h2 className="mt-1 font-serif text-lg font-semibold text-stone-900 dark:text-stone-100">
-                        {item.title}
-                      </h2>
-                      {(item.siteName || item.excerpt) && (
-                        <p className="mt-1 line-clamp-2 text-sm text-stone-600 dark:text-stone-400">
-                          {item.siteName ? `${item.siteName} · ` : ""}
-                          {item.excerpt}
+                      <h2 className="mt-1 text-lg font-semibold text-white">{item.title}</h2>
+                      {snippets.get(item.id) ? (
+                        <p className="mt-1 line-clamp-2 text-sm text-[color:var(--keepr-muted)]">
+                          {snippets.get(item.id)}
                         </p>
-                      )}
-                      {item.tags.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {item.tags.map((t: LibraryRow["tags"][number]) => (
-                            <span
-                              key={t.tag.id}
-                              className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600 dark:bg-stone-800 dark:text-stone-400"
-                            >
-                              {t.tag.name}
-                            </span>
-                          ))}
-                        </div>
+                      ) : (
+                        (item.siteName || item.excerpt) && (
+                          <p className="mt-1 line-clamp-2 text-sm text-[color:var(--keepr-muted)]">
+                            {item.siteName ? `${item.siteName} · ` : ""}
+                            {item.excerpt}
+                          </p>
+                        )
                       )}
                     </div>
                   </div>

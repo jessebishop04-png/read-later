@@ -13,9 +13,15 @@ type ApiItem = {
   title: string;
   siteName: string | null;
   kind: string;
+  matchSnippet?: string;
 };
 
-export function LibrarySearchBar() {
+type Props = {
+  /** Unique id when multiple search bars are mounted (desktop sidebar + mobile header). */
+  inputId?: string;
+};
+
+export function LibrarySearchBar({ inputId = "library-search" }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -132,59 +138,69 @@ export function LibrarySearchBar() {
   };
 
   return (
-    <div ref={rootRef} className="relative mx-auto w-full max-w-md">
+    <div ref={rootRef} className="relative w-full">
       <form
         onSubmit={submit}
-        className="flex w-full items-center gap-2"
+        className="flex w-full items-center"
         role="search"
       >
-        <label htmlFor="library-search" className="sr-only">
+        <label htmlFor={inputId} className="sr-only">
           Search saved items
         </label>
-        <input
-          ref={inputRef}
-          id="library-search"
-          type="search"
-          name="q"
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            if (!onLibrary && e.target.value.trim().length >= DROPDOWN_MIN_CHARS) {
-              setDropdownOpen(true);
-            }
-          }}
-          onFocus={() => {
-            if (!onLibrary && debounced.trim().length >= DROPDOWN_MIN_CHARS) {
-              setDropdownOpen(true);
-            }
-          }}
-          onBlur={flushDebounceOnBlur}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setDropdownOpen(false);
-          }}
-          placeholder="Search saved…"
-          autoComplete="off"
-          className="min-w-0 flex-1 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm text-stone-900 placeholder:text-stone-400 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:placeholder:text-stone-500"
-        />
-        <button
-          type="submit"
-          className="shrink-0 rounded-lg bg-stone-200 px-3 py-1.5 text-sm font-medium text-stone-800 hover:bg-stone-300 dark:bg-stone-700 dark:text-stone-100 dark:hover:bg-stone-600"
-        >
-          Search
-        </button>
+        <div className="relative w-full">
+          <svg
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--keepr-faint)]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"
+            />
+          </svg>
+          <input
+            ref={inputRef}
+            id={inputId}
+            type="search"
+            name="q"
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              if (!onLibrary && e.target.value.trim().length >= DROPDOWN_MIN_CHARS) {
+                setDropdownOpen(true);
+              }
+            }}
+            onFocus={() => {
+              if (!onLibrary && debounced.trim().length >= DROPDOWN_MIN_CHARS) {
+                setDropdownOpen(true);
+              }
+            }}
+            onBlur={flushDebounceOnBlur}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setDropdownOpen(false);
+            }}
+            placeholder="Search by meaning…"
+            autoComplete="off"
+            className="w-full rounded-full border-0 bg-[color:var(--keepr-elevated)] py-2 pl-9 pr-3 text-sm text-white placeholder:text-[color:var(--keepr-faint)] focus:outline-none focus:ring-1 focus:ring-white/20"
+          />
+        </div>
       </form>
 
       {!onLibrary && dropdownOpen && (debounced.trim().length >= DROPDOWN_MIN_CHARS || dropdownLoading) && (
         <div
-          className="absolute left-0 right-12 top-full z-50 mt-1 max-h-80 overflow-auto rounded-lg border border-stone-200 bg-white py-1 shadow-lg dark:border-stone-700 dark:bg-stone-900"
+          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-80 overflow-auto rounded-xl border border-white/10 bg-[color:var(--keepr-elevated)] py-1 shadow-lg md:left-0 md:right-auto md:w-[min(22rem,calc(100vw-4rem))]"
           role="listbox"
           aria-label="Matching saved items"
         >
           {dropdownLoading && (
-            <p className="px-3 py-2 text-sm text-stone-500 dark:text-stone-400">Searching…</p>
+            <p className="px-3 py-2 text-sm text-[color:var(--keepr-muted)]">Searching…</p>
           )}
           {!dropdownLoading && dropdownItems.length === 0 && (
-            <p className="px-3 py-2 text-sm text-stone-500 dark:text-stone-400">No matches</p>
+            <p className="px-3 py-2 text-sm text-[color:var(--keepr-muted)]">No matches</p>
           )}
           {!dropdownLoading &&
             dropdownItems.map((item) => (
@@ -192,22 +208,25 @@ export function LibrarySearchBar() {
                 key={item.id}
                 href={`/read/${item.id}`}
                 role="option"
-                className="block px-3 py-2 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
+                className="block px-3 py-2 text-left text-sm hover:bg-white/5"
                 onClick={() => setDropdownOpen(false)}
               >
-                <span className="line-clamp-1 font-medium text-stone-900 dark:text-stone-100">
-                  {item.title}
-                </span>
-                <span className="mt-0.5 line-clamp-1 text-xs text-stone-500 dark:text-stone-400">
-                  {item.kind === "video" ? "Video" : "Article"}
+                <span className="line-clamp-1 font-medium text-white">{item.title}</span>
+                <span className="mt-0.5 line-clamp-1 text-xs text-[color:var(--keepr-muted)]">
+                  {item.kind === "video" ? "Video" : item.kind === "pdf" ? "PDF" : item.kind === "email" ? "Email" : "Article"}
                   {item.siteName ? ` · ${item.siteName}` : ""}
                 </span>
+                {item.matchSnippet && (
+                  <span className="mt-0.5 line-clamp-2 text-xs text-[color:var(--keepr-faint)]">
+                    {item.matchSnippet}
+                  </span>
+                )}
               </Link>
             ))}
           {!dropdownLoading && debounced.trim().length >= DROPDOWN_MIN_CHARS && (
             <Link
               href={libraryHrefWithQ()}
-              className="block border-t border-stone-200 px-3 py-2 text-center text-sm font-medium text-amber-800 dark:border-stone-700 dark:text-amber-400"
+              className="block border-t border-white/10 px-3 py-2 text-center text-sm font-medium text-white"
               onClick={() => setDropdownOpen(false)}
             >
               See all in library

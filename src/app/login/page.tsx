@@ -4,6 +4,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { KeeprLogo } from "@/components/keepr-logo";
 
 function LoginForm() {
   const router = useRouter();
@@ -36,42 +37,34 @@ function LoginForm() {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 dark:border-stone-600 dark:bg-stone-900"
-        />
-      </div>
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 dark:border-stone-600 dark:bg-stone-900"
-        />
-      </div>
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+    <form onSubmit={submit} className="space-y-3">
+      <input
+        id="email"
+        type="email"
+        autoComplete="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Enter your email"
+        className="w-full rounded-xl border-0 bg-[#1a1a1a] px-4 py-3.5 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-white/25"
+      />
+      <input
+        id="password"
+        type="password"
+        autoComplete="current-password"
+        required
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        className="w-full rounded-xl border-0 bg-[#1a1a1a] px-4 py-3.5 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-white/25"
+      />
+      {error && <p className="text-sm text-red-400">{error}</p>}
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl bg-amber-700 py-3 font-medium text-white hover:bg-amber-800 disabled:opacity-50 dark:bg-amber-600"
+        className="w-full rounded-xl bg-neutral-400 py-3.5 font-semibold text-black hover:bg-neutral-300 disabled:opacity-50"
       >
-        {loading ? "Signing in…" : "Sign in"}
+        {loading ? "Signing in…" : "Continue"}
       </button>
     </form>
   );
@@ -79,26 +72,28 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-app-chrome px-4">
-      <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 shadow-sm dark:border-stone-800 dark:bg-stone-900">
-        <p className="text-lg font-medium text-stone-900 dark:text-stone-50">
-          Sign in to your library
-        </p>
-        <div className="mt-8">
-          <Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-stone-100 dark:bg-stone-800" />}>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4">
+      <div className="w-full max-w-sm text-center">
+        <div className="mb-6 flex justify-center">
+          <KeeprLogo className="text-2xl text-white" />
+        </div>
+        <h1 className="text-2xl font-bold text-white">Sign up or log in</h1>
+        <div className="mt-8 text-left">
+          <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-[#1a1a1a]" />}>
             <LoginForm />
           </Suspense>
         </div>
-        <p className="mt-6 text-center text-sm text-stone-600 dark:text-stone-400">
-          No account?{" "}
-          <Link href="/register" className="font-medium text-amber-800 underline dark:text-amber-400">
-            Sign up
-          </Link>
-        </p>
+        <p className="my-6 text-sm text-neutral-500">or</p>
+        <Link
+          href="/register"
+          className="block w-full rounded-xl bg-white py-3.5 text-center font-semibold text-black hover:bg-neutral-100"
+        >
+          Create an account
+        </Link>
+        <Link href="/" className="mt-8 inline-block text-sm text-neutral-500 hover:text-white">
+          ← Keepr
+        </Link>
       </div>
-      <Link href="/" className="mt-8 text-sm text-stone-500 hover:underline">
-        ← Home
-      </Link>
     </div>
   );
 }
