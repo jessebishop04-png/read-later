@@ -70,6 +70,34 @@ function resolveSqliteDatabaseFileAndUrl(projectRoot) {
 }
 
 function applyToEnv(root) {
+  // Load .env so CLI sees DATABASE_URL when not already set by the shell
+  try {
+    const envPath = path.join(findProjectRoot(root) || root, ".env");
+    if (fs.existsSync(envPath)) {
+      for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
+        const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/.exec(line);
+        if (!m) continue;
+        if (process.env[m[1]] !== undefined) continue;
+        let v = m[2];
+        if (
+          (v.startsWith('"') && v.endsWith('"')) ||
+          (v.startsWith("'") && v.endsWith("'"))
+        ) {
+          v = v.slice(1, -1);
+        }
+        process.env[m[1]] = v;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const existing = (process.env.DATABASE_URL || "").trim();
+  // Postgres (or any non-file URL) — do not remap to local SQLite
+  if (existing && !existing.toLowerCase().startsWith("file:")) {
+    return { root: findProjectRoot(root) || root, url: existing, filePath: null };
+  }
+
   const projectRoot = findProjectRoot(root) || root;
   const { url, filePath } = resolveSqliteDatabaseFileAndUrl(projectRoot);
   process.env.DATABASE_URL = url;
